@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# LangGraph
+.langgraph/
+
+# Docker
+pgdata/
+redisdata/
+
+# OS
+.DS_Store
+Thumbs.db

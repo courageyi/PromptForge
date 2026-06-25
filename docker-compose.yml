@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+  # ============================================================
+  # PostgreSQL 15 + pgvector — 提示词模板向量存储
+  # ============================================================
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: promptforge-db
+    environment:
+      POSTGRES_DB: promptforge
+      POSTGRES_USER: promptforge
+      POSTGRES_PASSWORD: promptforge_secret
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U promptforge"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ============================================================
+  # Redis — 热点模板缓存 + 任务队列
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: promptforge-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ============================================================
+  # FastAPI 后端服务
+  # ============================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: promptforge-api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: "postgresql://promptforge:promptforge_secret@postgres:5432/promptforge"
+      REDIS_URL: "redis://redis:6379/0"
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: "promptforge"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+    command: uvicorn src.server:app --host 0.0.0.0 --port 8000 --reload
+
+  # ============================================================
+  # Streamlit 前端
+  # ============================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: promptforge-frontend
+    ports:
+      - "8501:8501"
+    environment:
+      API_BASE_URL: "http://api:8000"
+    depends_on:
+      - api
+    volumes:
+      - ./frontend:/app/frontend
+    command: streamlit run frontend/app.py --server.port 8501 --server.address 0.0.0.0
+
+volumes:
+  pgdata:
+  redisdata:

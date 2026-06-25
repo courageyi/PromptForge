@@ -1,0 +1,32 @@
+# ============================================================
+# PromptForge 依赖
+# ============================================================
+
+# --- LangGraph 核心 ---
+langgraph>=0.2.0          # 有状态多智能体编排
+langchain>=0.3.0           # LLM 抽象层
+langchain-openai>=0.2.0    # OpenAI 集成
+langchain-community>=0.3.0 # 社区工具集成
+
+# --- 向量存储 ---
+langchain-postgres>=0.0.5  # PostgreSQL + pgvector
+pgvector>=0.2.0            # 向量扩展
+
+# --- Web 框架 ---
+fastapi>=0.115.0           # API 服务
+uvicorn[standard]>=0.30.0  # ASGI 服务器
+
+# --- 前端 ---
+streamlit>=1.35.0          # 交互界面
+
+# --- 数据 ---
+pydantic>=2.0              # 数据校验
+redis>=5.0                 # 缓存
+
+# --- 工具 ---
+python-dotenv>=1.0         # 环境变量管理
+langsmith>=0.1.0           # 链路追踪（可选但推荐）
+
+# --- 测试 ---
+pytest>=8.0
+pytest-asyncio>=0.23.0
